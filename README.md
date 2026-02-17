@@ -6,7 +6,6 @@ Fluent, zero‑boilerplate goroutine launcher with middleware support.
 
 Requires Go (1.18) or later.
 
----
 
 ## Description
 
@@ -32,7 +31,7 @@ _ = goroutiner.
     Batch(ctx, batchMws...).
     Add(go1, mwsForGo1...).
     Add(go2, mwsForGo2...).
-    Add(go3, mwsForGo2...).
+    Add(go3).
     Wait()
     
 // Result middlewares:
@@ -66,33 +65,33 @@ Also, there are additional methods for more specific cases:
 - `SingleAsync()` -- for cases, when only one goroutine needs to be launched in async mode
 - `AsyncBs()` -- for cases, when need to execute `Async` with custom result channel buffer size
 
----
-
 ## Examples
 
 ### Case 1: Wait() + Global Middleware
 
 - Wait for 2 goroutines and collect errors.
-- If panic occurs in any goroutine, log it properly before the app fails.
+- If panic occurs in any goroutine, log it properly before the app crashes.
 
-<table style="width: 100%">
-    <thead>
-        <th>Manual code</th>
-        <th>This package</th>
-    </thead>
-    <tbody>
-        <tr>
-            <td style="vertical-align: top;">
-<pre>
-// Some initializations -- once for all time.
+<table>
+<tr>
+<th>Manual code</th>
+<th>This package</th>
+</tr>
+<tr>
+<td>
+
+```go
+// Some initialization -- once for all time.
 // --------------------------------------------
 
 // ...
-</pre>
-            </td>
-            <td style="vertical-align: top;">
-<pre>
-// Some initializations -- once for all time.
+```
+
+</td>
+<td>
+
+```go
+// Some initialization -- once for all time.
 // --------------------------------------------
 
 // ...
@@ -103,13 +102,17 @@ logPanicMw := goroutiner.MwPanicRelay(func(p any, ds []byte, ctx context.Context
 })
 
 grt := goroutiner.New(logPanicMw)
-</pre>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top;">
-<pre>
-// Executing -- each time such case is needed.
+```
+
+</td>
+</tr>
+</table>
+<table>
+<tr>
+<td>
+
+```go
+// Execution -- each time such case is needed.
 // --------------------------------------------
 
 var err1 error
@@ -145,11 +148,13 @@ go func() {
 }()
 
 wg.Wait()
-</pre>
-            </td>
-            <td style="vertical-align: top;">
-<pre>
-// Executing -- each time such case is needed.
+```
+
+</td>
+<td>
+
+```go
+// Execution -- each time such case is needed.
 // --------------------------------------------
 
 errs := grt.Batch(ctx).
@@ -162,10 +167,10 @@ errs := grt.Batch(ctx).
         return errors.New("error from goroutine #2")
     }).
     Wait()
-</pre>
-            </td>
-        </tr>
-    </tbody>
+```
+
+</td>
+</tr>
 </table>
 
 ### Case 2: CancelOnError() + Session Middleware
@@ -173,34 +178,16 @@ errs := grt.Batch(ctx).
 - Wait for 2 requests (e.g. to combine results later)
 - If any request fails with an error or panics, return error and cancel other requests.
 
-<table style="width: 100%">
-    <thead>
-        <th>Manual code</th>
-        <th>This package</th>
-    </thead>
-    <tbody>
-        <tr>
-            <td style="vertical-align: top;">
-<pre>
-// Some initializations -- once for all time.
-// --------------------------------------------
+<table>
+<tr>
+<th>Manual code</th>
+<th>This package</th>
+</tr>
+<tr>
+<td>
 
-// ...
-</pre>
-            </td>
-            <td style="vertical-align: top;">
-<pre>
-// Some initializations -- once for all time.
-// --------------------------------------------
-
-// ...
-</pre>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top;">
-<pre>
-// Executing -- each time such case is needed.
+```go
+// Execution -- each time such case is needed.
 // --------------------------------------------
 
 var res1 any
@@ -235,11 +222,13 @@ er.Go(func() (rErr error) {
 })
 
 err := eg.Wait()
-</pre>
-            </td>
-            <td style="vertical-align: top;">
-<pre>
-// Executing -- each time such case is needed.
+```
+
+</td>
+<td>
+
+```go
+// Execution -- each time such case is needed.
 // --------------------------------------------
 
 var res1 any
@@ -260,10 +249,10 @@ err := goroutiner.New().
         return err
     }).
     CancelOnError()
-</pre>
-            </td>
-        </tr>
-    </tbody>
+```
+
+</td>
+</tr>
 </table>
 
 ### Case 3: Async + Individual Middleware
@@ -272,34 +261,16 @@ err := goroutiner.New().
 - Notify client code once completed
 - Do not fail the app even if sender panics
 
-<table style="width: 100%">
-    <thead>
-        <th>Manual code</th>
-        <th>This package</th>
-    </thead>
-    <tbody>
-        <tr>
-            <td style="vertical-align: top;">
-<pre>
-// Some initializations -- once for all time.
-// --------------------------------------------
+<table>
+<tr>
+<th>Manual code</th>
+<th>This package</th>
+</tr>
+<tr>
+<td>
 
-// ...
-</pre>
-            </td>
-            <td style="vertical-align: top;">
-<pre>
-// Some initializations -- once for all time.
-// --------------------------------------------
-
-// ...
-</pre>
-            </td>
-        </tr>
-        <tr>
-            <td style="vertical-align: top;">
-<pre>
-// Executing -- each time such case is needed.
+```go
+// Execution -- each time such case is needed.
 // --------------------------------------------
 
 errCh := make(chan error, 1)
@@ -314,20 +285,23 @@ go func() {
     err := ... send email ...
     errCh <- err
 }()
-</pre>
-            </td>
-            <td style="vertical-align: top;">
-<pre>
-// Executing -- each time such case is needed.
+```
+
+</td>
+<td>
+
+```go
+// Execution -- each time such case is needed.
 // --------------------------------------------
 
-errCh := goroutiner.New().SingleAsync(ctx, func(ctx context.Context) error {
+errCh := goroutiner.New().
+    SingleAsync(ctx, func(ctx context.Context) error {
         return ... send email ...
     }, goroutiner.MwPanicToError(func(p any, ds []byte, ctx context.Context) error {
         return fmt.Errorf("panic: %#v; stack: %s", p, ds)
     }))
-</pre>
-            </td>
-        </tr>
-    </tbody>
+```
+
+</td>
+</tr>
 </table>
